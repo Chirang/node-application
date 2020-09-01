@@ -1,6 +1,9 @@
 const path = require('path')
 const express = require('express')
 const hbs = require('hbs')
+const request = require('postman-request')
+const forecast = require('./utlis/forecast')
+const geocode = require('./utlis/geocode')
 
 const app = express()
 
@@ -40,9 +43,29 @@ app.get('/help',(req,res)=>{
 })
 
 app.get('/weather',(req,res)=>{
-    res.send({
-        forecast: '15 degree',
-        location: 'India'
+    if(!req.query.address){
+        return res.send({
+            error: 'You must provide address'
+        })
+    }
+
+    geocode(req.query.address,(error,{latitude,longitute,location} = {} )=>{
+        if(error){
+            return res.send({ error })
+        }
+    
+        forecast(latitude,longitute,(error,forecastData)=>{
+            if(error){
+                return res.send({ error })
+            }
+
+            res.send({
+                forecast: forecastData,
+                location,
+                address:req.query.address
+
+            })
+        })
     })
 })
 
